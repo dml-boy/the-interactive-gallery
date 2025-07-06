@@ -112,8 +112,15 @@ export const getImages = async (req: Request, res: Response): Promise<void> => {
       totalPages,
       page,
     });
-  } catch (err: any) {
-    console.error('❌ Error fetching images:', err.message);
-    res.status(500).json({ message: 'Failed to fetch images from Unsplash' });
+} catch (err: any) {
+  console.error('❌ Error fetching images from Unsplash:');
+  if (err.response) {
+    console.error('Status:', err.response.status);
+    console.error('Data:', err.response.data);
+  } else {
+    console.error('Message:', err.message);
   }
+  res.status(500).json({ message: 'Failed to fetch images from Unsplash' });
+}
+
 };
