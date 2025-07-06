@@ -1,23 +1,15 @@
-// 📄 controllers/commentController.ts
 import { Request, Response } from 'express';
 import { pool } from '../db/pool';
 
-export const getComments = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const [rows] = await pool.query(
-      'SELECT id, image_id, content, user_name, avatar_url, created_at, updated_at FROM comments WHERE image_id = ? ORDER BY created_at DESC',
-      [req.params.imageId]
-    );
-    res.json(rows);
-  } catch (err: any) {
-    console.error('Error fetching comments:', err.message);
-    res.status(500).json({ message: 'Failed to load comments.' });
-  }
-};
-
 export const postComment = async (req: Request, res: Response): Promise<void> => {
-  const imageId = req.params.imageId;
+  // allow imageId from either URL param or request body
+  const imageId = req.params.imageId ?? req.body.imageId;
   const { content, user_name = 'Anonymous', avatar_url = '' } = req.body;
+
+  if (!imageId) {
+    res.status(400).json({ message: 'Missing imageId.' });
+    return;
+  }
 
   if (!content || content.trim().length < 3) {
     res.status(400).json({ message: 'Comment too short.' });
@@ -39,43 +31,75 @@ export const postComment = async (req: Request, res: Response): Promise<void> =>
       created_at: new Date(),
     });
   } catch (err: any) {
-    console.error('Error posting comment:', err.message);
+    console.error('Error posting comment:', err);
     res.status(500).json({ message: 'Failed to post comment.' });
   }
 };
+export const getComments = async (req: Request, res: Response): Promise<void> => {
+  const imageId = req.params.imageId;
 
-export const editComment = async (req: Request, res: Response): Promise<void> => {
-  const { commentId } = req.params;
-  const { content } = req.body;
-
-  if (!content || content.trim().length < 3) {
-    res.status(400).json({ message: 'Content too short to update.' });
+  if (!imageId) {
+    res.status(400).json({ message: 'Missing imageId.' });
     return;
   }
 
   try {
-    await pool.query(
-      'UPDATE comments SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-      [content, commentId]
+    const [rows]: any = await pool.query(
+      'SELECT * FROM comments WHERE image_id = ? ORDER BY created_at DESC',
+      [imageId]
     );
-    res.status(200).json({
-      message: 'Comment updated.',
-      updated_at: new Date(),
-      content,
-    });
+
+    res.json(rows);
   } catch (err: any) {
-    console.error('Edit comment failed:', err.message);
-    res.status(500).json({ message: 'Failed to update comment.' });
+    console.error('Error fetching comments:', err);
+    res.status(500).json({ message: 'Failed to fetch comments.' });
   }
 };
+export const editComment = async (req: Request, res: Response): Promise<void> => {
+  const commentId = req.params.commentId;
+  const { content } = req.body;
 
-export const deleteComment = async (req: Request, res: Response): Promise<void> => {
-  const { commentId } = req.params;
+  if (!commentId || !content || content.trim().length < 3) {
+    res.status(400).json({ message: 'Invalid request.' });
+    return;
+  }
+
   try {
-    await pool.query('DELETE FROM comments WHERE id = ?', [commentId]);
-    res.status(200).json({ message: 'Comment deleted.' });
+    const [result]: any = await pool.query(
+      'UPDATE comments SET content = ? WHERE id = ?',
+      [content, commentId]
+    );
+
+    if (result.affectedRows === 0) {
+      res.status(404).json({ message: 'Comment not found.' });
+      return;
+    }
+
+    res.json({ message: 'Comment updated successfully.' });
   } catch (err: any) {
-    console.error('Delete comment failed:', err.message);
+    console.error('Error editing comment:', err);
+    res.status(500).json({ message: 'Failed to edit comment.' });
+  }
+};
+export const deleteComment = async (req: Request, res: Response): Promise<void> => {
+  const commentId = req.params.commentId;
+
+  if (!commentId) {
+    res.status(400).json({ message: 'Missing commentId.' });
+    return;
+  }
+
+  try {
+    const [result]: any = await pool.query('DELETE FROM comments WHERE id = ?', [commentId]);
+
+    if (result.affectedRows === 0) {
+      res.status(404).json({ message: 'Comment not found.' });
+      return;
+    }
+
+    res.json({ message: 'Comment deleted successfully.' });
+  } catch (err: any) {
+    console.error('Error deleting comment:', err);
     res.status(500).json({ message: 'Failed to delete comment.' });
   }
 };

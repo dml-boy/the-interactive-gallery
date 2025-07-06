@@ -1,28 +1,39 @@
 // src/types.ts
 
-export interface ImageData {
-  id: string;
-  urls: {
-    thumb: string;
-    regular: string;
-    full: string;
-  };
-  alt_description: string;
-  description?: string;
-  user: {
-    name: string;
-  };
-  tags?: { title: string }[];
-  likes: number;
-  liked: boolean;
-  comments?: CommentData[]; // optional, if you fetch with comments
-}
+// export interface Tag {
+//   title: string;
+//   type?: string; // optional now
+//   source?: any;
+// }
 
 export interface CommentData {
   id: string;
   content: string;
   created_at: string;
-  user: {
+  user: { name: string };
+}
+
+export interface ImageData {
+  id: string;
+  urls: {
+    thumb: string;
+    small?: string;
+    regular?: string;
+    full?: string;
+  };
+  alt_description?: string;
+  description?: string;
+  user?: {
     name: string;
   };
+  tags?: string[];
+  likes: number;
+  comments?: string[];
+  liked?: boolean;
+}
+interface ImageModalProps {
+  image: ImageData;
+  onClose: () => void;
+  onLike: () => void;
+    onUpdateImage: (updatedImage: ImageData) => void;
 }

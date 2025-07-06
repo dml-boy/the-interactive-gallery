@@ -1,142 +1,25 @@
-/* App.css */
-
-/* Container and Header */
-.pos-app {
-  padding: 20px;
-  background-color: #f5f6f8; /* light gray background */
-}
-.pos-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-.pos-header h1 {
-  font-size: 28px;
-  color: #333;
+.my-masonry-grid {
+  display: flex;
+  margin-left: -16px; /* gutter size offset */
+  width: auto;
 }
 
-/* Gallery Grid */
-.pos-gallery {
-  margin: -10px;
-}
-.pos-gallery .col-sm-6,
-.pos-gallery .col-md-4,
-.pos-gallery .col-lg-3 {
-  padding: 10px;
+.my-masonry-grid_column {
+  padding-left: 16px; /* gutter size */
+  background-clip: padding-box;
 }
 
-/* POS-style Card */
-.pos-card {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  cursor: pointer;
-  transition: transform 0.2s ease-in-out;
-  display: flex;
-  flex-direction: column;
+/* Optional: improve spacing between cards */
+.my-masonry-grid_column > div {
+  margin-bottom: 16px;
 }
-.pos-card:hover {
-  transform: scale(1.02);
-}
-.pos-card__thumb {
-  width: 100%;
-  height: 200px;
-  overflow: hidden;
-}
-.pos-card__img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.pos-card__content {
-  padding: 8px 12px 16px;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-}
-.pos-card__title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #222;
-  margin-bottom: 8px;
-}
-.pos-card__stats {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #555;
-  opacity: 0.8;
-}
-.pos-card__stats i {
-  margin-right: 4px;
-}
+@media (max-width: 576px) {
+  h1 {
+    font-size: 1.5rem;
+  }
 
-/* POS-style Modal */
-.pos-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1050;
-}
-.pos-modal__content {
-  background: #fff;
-  border-radius: 8px;
-  max-width: 90%;
-  width: 500px;
-  padding: 20px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-.pos-modal__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-.pos-modal__header h2 {
-  margin: 0;
-  font-size: 20px;
-  color: #222;
-}
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  color: #888;
-}
-.pos-modal__body img {
-  width: 100%;
-  border-radius: 4px;
-  margin-bottom: 15px;
-}
-.pos-modal__stats {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-.pos-modal__stats .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: 500;
-}
-/* Use high-contrast colors for buttons per POS guidelines */
-.btn-primary {
-  background-color: #007bff;
-  border-color: #007bff;
-  color: #fff;
-}
-.btn-secondary {
-  background-color: #6c757d;
-  border-color: #6c757d;
-  color: #fff;
+  .gallery-card-footer button {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
 }

@@ -1,6 +1,5 @@
-// src/Components/ImageModal.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   Modal,
@@ -11,6 +10,9 @@ import {
   Spinner,
   Badge,
 } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHeart as solidHeart, faTag, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as regularHeart, faCommentDots } from '@fortawesome/free-regular-svg-icons';
 import { ImageData, CommentData } from '../types';
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
@@ -21,102 +23,127 @@ interface ImageModalProps {
   onLike: () => void;
 }
 
-function ImageModal({ image, onClose, onLike }: ImageModalProps) {
+const ImageModal: React.FC<ImageModalProps> = ({ image, onClose, onLike }) => {
   const [comments, setComments] = useState<CommentData[]>([]);
   const [newComment, setNewComment] = useState('');
   const [error, setError] = useState('');
-  const [loadingComments, setLoadingComments] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchComments = async () => {
+      setLoading(true);
       try {
-        const response = await axios.get(`${BASE_URL}/api/comments/${image.id}`);
-        setComments(response.data);
-      } catch (error) {
-        console.error('Error fetching comments:', error);
-        setError('Failed to load comments');
+        const res = await axios.get(`${BASE_URL}/api/comments/${image.id}`);
+        const normalized: CommentData[] = res.data.map((c: any) => ({
+          id: String(c.id),
+          content: c.content,
+          created_at: c.created_at,
+          user: { name: c.user_name || 'Guest' },
+        }));
+        setComments(normalized);
+        setError('');
+      } catch (err) {
+        console.error('Error fetching comments:', err);
+        setError('Failed to load comments.');
       } finally {
-        setLoadingComments(false);
+        setLoading(false);
       }
     };
+
     fetchComments();
   }, [image.id]);
 
-  const handleCommentSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     const trimmed = newComment.trim();
-
     if (trimmed.length < 3) {
-      setError('Comment must be at least 3 characters long.');
-      setIsSubmitting(false);
+      setError('Comment must be at least 3 characters.');
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      const response = await axios.post(`${BASE_URL}/api/comments`, {
-        imageId: image.id,
+      const res = await axios.post(`${BASE_URL}/api/comments/${image.id}`, {
         content: trimmed,
+        user_name: 'Guest',
+        avatar_url: '',
       });
-      setComments([response.data, ...comments]);
+
+      const newCommentData: CommentData = {
+        id: String(res.data.id),
+        content: res.data.content,
+        created_at: res.data.created_at,
+        user: { name: res.data.user_name || 'Guest' },
+      };
+
+      setComments((prev) => [newCommentData, ...prev]);
       setNewComment('');
       setError('');
-    } catch (error) {
-      console.error('Error posting comment:', error);
-      setError('Failed to post comment. Try again later.');
+    } catch (err) {
+      console.error('Error posting comment:', err);
+      setError('Failed to post comment.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Modal show onHide={onClose} size="lg" centered scrollable className="animate__animated animate__fadeIn">
-      <Modal.Header closeButton className="border-0 pb-0">
-        <Modal.Title className="fs-5">{image.alt_description || 'Untitled Image'}</Modal.Title>
+    <Modal show onHide={onClose} size="lg" centered scrollable>
+      <Modal.Header closeButton className="pos-modal__header">
+        <Modal.Title className="pos-modal__title text-wrap">
+          {image.alt_description || 'Untitled Image'}
+        </Modal.Title>
       </Modal.Header>
-      <Modal.Body className="pt-0">
-        <div className="text-center mb-3 position-relative">
+
+      <Modal.Body className="pos-modal__body px-md-4 px-2">
+        <div className="text-center mb-4 position-relative">
           <img
             src={image.urls.full}
-            alt={image.alt_description}
-            className="img-fluid rounded-3"
+            alt={image.alt_description || 'Image'}
+            className="img-fluid rounded shadow-sm"
             style={{ maxHeight: '60vh', objectFit: 'contain' }}
           />
           <Button
-            variant={image.liked ? 'danger' : 'outline-danger'}
-            className="position-absolute top-0 end-0 m-3"
+            variant="light"
+            className="position-absolute top-0 end-0 m-3 border-0 like-button"
             onClick={onLike}
-            aria-label="Like image"
+            aria-pressed={image.liked}
+            data-testid="modal-like-button"
           >
-            <i className={`fas fa-heart ${image.liked ? 'text-white' : ''}`}></i> {image.likes}
+            <FontAwesomeIcon
+              icon={image.liked ? solidHeart : regularHeart}
+              className={image.liked ? 'text-danger' : 'text-secondary'}
+            />{' '}
+            {image.likes}
           </Button>
         </div>
 
         <div className="mb-4">
-          <p className="mb-2">
-            <strong>Photographer:</strong> {image.user.name}
-          </p>
-          {image.description && <p className="text-muted mb-3">{image.description}</p>}
-          {Array.isArray(image.tags) && image.tags.length > 0 && (
-            <div className="d-flex flex-wrap gap-2 mb-3">
+          <strong>Tags:</strong>
+          {Array.isArray(image.tags) && image.tags.length > 0 ? (
+            <div className="d-flex flex-wrap gap-2 mt-2">
               {image.tags.map((tag, i) => (
-                <Badge key={i} bg="light" text="dark" pill>
-                  {tag.title}
+                <Badge key={i} bg="light" text="dark" pill className="px-3 py-2 text-sm">
+                  <FontAwesomeIcon icon={faTag} className="me-1 text-secondary" /> {tag}
                 </Badge>
               ))}
+            </div>
+          ) : (
+            <div className="text-muted mt-2">
+              <FontAwesomeIcon icon={faInfoCircle} className="me-1" /> No tags available.
             </div>
           )}
         </div>
 
         <div className="border-top pt-3">
-          <h5 className="mb-3">Comments ({comments.length})</h5>
+          <h5 className="mb-3 d-flex align-items-center gap-2">
+            <FontAwesomeIcon icon={faCommentDots} /> Comments ({comments.length})
+          </h5>
 
-          {loadingComments ? (
+          {loading ? (
             <div className="text-center py-3">
-              <Spinner animation="border" size="sm" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </Spinner>
+              <Spinner animation="border" size="sm" />
             </div>
           ) : error ? (
             <Alert variant="danger">{error}</Alert>
@@ -126,12 +153,12 @@ function ImageModal({ image, onClose, onLike }: ImageModalProps) {
             <ListGroup variant="flush" className="mb-3">
               {comments.map((comment) => (
                 <ListGroup.Item key={comment.id} className="px-0 py-2">
-                  <div className="d-flex justify-content-between align-items-start">
+                  <div className="d-flex justify-content-between flex-column flex-md-row">
                     <div>
                       <strong>{comment.user.name}</strong>
                       <p className="mb-1">{comment.content}</p>
                     </div>
-                    <small className="text-muted">
+                    <small className="text-muted mt-1 mt-md-0 text-end text-md-start">
                       {new Date(comment.created_at).toLocaleDateString()}
                     </small>
                   </div>
@@ -140,20 +167,22 @@ function ImageModal({ image, onClose, onLike }: ImageModalProps) {
             </ListGroup>
           )}
 
-          <Form onSubmit={handleCommentSubmit} className="mt-3">
+          <Form onSubmit={handleSubmit} className="mt-3">
             <Form.Group controlId="commentInput" className="mb-3">
-              <Form.Label>Add your comment</Form.Label>
+              <Form.Label className="fw-bold">Add a comment</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Share your thoughts about this image..."
+                placeholder="Write something..."
                 disabled={isSubmitting}
               />
             </Form.Group>
-            {error && <Alert variant="danger" className="py-2">{error}</Alert>}
-            <div className="d-flex justify-content-end">
+
+            {error && <Alert variant="danger">{error}</Alert>}
+
+            <div className="text-end">
               <Button
                 variant="primary"
                 type="submit"
@@ -161,10 +190,7 @@ function ImageModal({ image, onClose, onLike }: ImageModalProps) {
               >
                 {isSubmitting ? (
                   <>
-                    <Spinner as="span" animation="border" size="sm" role="status">
-                      <span className="visually-hidden">Posting...</span>
-                    </Spinner>
-                    <span className="ms-2">Posting...</span>
+                    <Spinner animation="border" size="sm" /> Posting...
                   </>
                 ) : (
                   'Post Comment'
@@ -176,6 +202,6 @@ function ImageModal({ image, onClose, onLike }: ImageModalProps) {
       </Modal.Body>
     </Modal>
   );
-}
+};
 
 export default ImageModal;

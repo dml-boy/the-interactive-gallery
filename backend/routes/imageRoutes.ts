@@ -1,11 +1,12 @@
-// 📄 routes/imageRoutes.ts
-import { Router } from 'express';
-import { getComments, postComment } from '../controllers/commentController';
+import express from 'express';
+import { getImages } from '../controllers/imageController';
+import { likeImage } from '../controllers/likeController';
 
-const router = Router();
+const router = express.Router();
 
-// Aliased routes for compatibility
-router.get('/:imageId/comments', getComments);
-router.post('/:imageId/comments', postComment);
+router.post('/:imageId/like', likeImage);  // ✅ POST /api/images/:imageId/like
+router.get('/', getImages);
+
+console.log('✅ imageRoutes loaded');
 
 export default router;
